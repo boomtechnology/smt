@@ -69,7 +69,7 @@ class EGO(SurrogateBasedApplication):
 
         [nx, 1]: x optimum
         [1, 1]: y optimum
-        int: index of optimum in data arrays 
+        int: index of optimum in data arrays
         [ndoe + n_iter, nx]: coord-x data
         [ndoe + n_iter, 1]: coord-y data
         [ndoe, nx]: coord-x initial doe
@@ -168,11 +168,11 @@ class EGO(SurrogateBasedApplication):
         f_min = np.min(y_data)
         pred = self.gpr.predict_values(points)
         var = self.gpr.predict_variances(points)
+        if var.size == 1 and var == 0.0:  # can be use only if one point is computed
+            return 0.0
         args0 = (f_min - pred) / var
         args1 = (f_min - pred) * norm.cdf(args0)
         args2 = var * norm.pdf(args0)
-        if var.size == 1 and var == 0.0:  # can be use only if one point is computed
-            return 0.0
 
         ei = args1 + args2
         return ei

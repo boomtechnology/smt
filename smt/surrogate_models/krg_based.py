@@ -194,7 +194,7 @@ class KrgBased(SurrogateModel):
 
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
-        R = np.eye(self.nt) * (1.0 + nugget + noise)
+        R = np.eye(self.nt) # * (1.0 + nugget + noise)  # Remove noise for debugging
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
