@@ -93,7 +93,7 @@ class EGO(SurrogateBasedApplication):
         x_data = x_doe
         y_data = y_doe
 
-        self.gpr = KRG(print_global=False)
+        self.gpr = KRG(print_global=False, corr="squar_exp")
 
         bounds = xlimits
 
@@ -106,6 +106,7 @@ class EGO(SurrogateBasedApplication):
 
             self.gpr.set_training_values(x_data, y_data)
             self.gpr.train()
+            self.gpr.options["theta0"] = self.gpr.optimal_theta  # Seed next hyperparameter optimization
 
             if criterion == "EI":
                 self.obj_k = lambda x: -self.EI(np.atleast_2d(x), y_data)

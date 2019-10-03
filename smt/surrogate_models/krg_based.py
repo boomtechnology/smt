@@ -194,7 +194,7 @@ class KrgBased(SurrogateModel):
 
         r = self._correlation_types[self.options["corr"]](theta, self.D).reshape(-1, 1)
 
-        R = np.eye(self.nt) # * (1.0 + nugget + noise)  # Remove noise for debugging
+        R = np.eye(self.nt) * (1.0 + nugget + noise)
         R[self.ij[:, 0], self.ij[:, 1]] = r[:, 0]
         R[self.ij[:, 1], self.ij[:, 0]] = r[:, 0]
 
@@ -433,6 +433,7 @@ class KrgBased(SurrogateModel):
         else:
             n_iter = 0
 
+        # n_iter = 5
         for ii in range(n_iter, -1, -1):
             best_optimal_theta, best_optimal_rlf_value, best_optimal_par, constraints = (
                 [],
@@ -548,6 +549,9 @@ class KrgBased(SurrogateModel):
                 self.best_iteration_fail = None
                 exit_function = True
 
+        print(f"Found best_optimal_rlf_value: {best_optimal_rlf_value}")
+        # print(f"Found best_optimal_par: {best_optimal_par}")
+        print(f"Found best_optimal_theta: {best_optimal_theta}")
         return best_optimal_rlf_value, best_optimal_par, best_optimal_theta
 
     def _check_param(self):
