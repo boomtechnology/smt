@@ -1,0 +1,8 @@
+--index-url https://1hejIc-6NBRw68BmAkuppZVHsgbOfkQPs0:@pypi.fury.io/boomtechnology/
+--extra-index-url https://pypi.org/simple
+
+gdb-tools
+nose>=1.0.0
+testflo
+
+-e .
