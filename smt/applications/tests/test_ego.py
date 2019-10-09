@@ -59,6 +59,7 @@ class TestEGO(SMTestCase):
         ego = EGO(xdoe=xdoe, n_iter=n_iter, criterion=criterion, xlimits=xlimits)
 
         x_opt, y_opt, _, _, _, _, _ = ego.optimize(fun=fun)
+        print(x_opt)
 
         self.assertTrue(np.allclose([[1, 1]], x_opt, rtol=0.5))
         self.assertAlmostEqual(0.0, float(y_opt), delta=1)
@@ -178,4 +179,3 @@ if __name__ == "__main__":
         TestEGO.run_ego_example()
         exit()
     unittest.main()
-
