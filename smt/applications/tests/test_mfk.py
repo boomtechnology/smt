@@ -5,7 +5,6 @@ Created on Mon May 07 14:20:11 2018
 @author: m.meliani
 """
 
-from __future__ import print_function, division
 import matplotlib
 
 matplotlib.use("Agg")
@@ -15,7 +14,6 @@ import numpy as np
 import unittest
 import inspect
 
-from six import iteritems
 from collections import OrderedDict
 
 from smt.problems import Sphere, TensorProduct
@@ -25,7 +23,7 @@ from smt.utils.sm_test_case import SMTestCase
 from smt.utils.silence import Silence
 from smt.utils import compute_rms_error
 from smt.surrogate_models import LS, QP, KPLS, KRG, KPLSK, GEKPLS, GENN
-from smt.applications import MFK
+from smt.applications.mfk import MFK, NestedLHS
 from copy import deepcopy
 
 print_output = False
@@ -36,6 +34,25 @@ class TestMFK(SMTestCase):
         self.nt = 100
         self.ne = 100
         self.ndim = 3
+
+    def test_nested_lhs(self):
+        xlimits = np.array([[0.0, 1.0], [0.0, 1.0]])
+        xnorm = NestedLHS(nlevel=3, xlimits=xlimits)
+        xlow, xmedium, xhigh = xnorm(15)
+
+        for items1 in xmedium:
+            found = False
+            for items0 in xlow:
+                if items1.all() == items0.all():
+                    found = True
+            self.assertTrue(found)
+
+        for items1 in xhigh:
+            found = False
+            for items0 in xmedium:
+                if items1.all() == items0.all():
+                    found = True
+            self.assertTrue(found)
 
     def test_mfk(self):
         self.problems = ["exp", "tanh", "cos"]
@@ -122,13 +139,13 @@ class TestMFK(SMTestCase):
         self.assert_error(e_error1, 0.0, 1e-1)
 
     @staticmethod
-    def run_mfk_example(self):
+    def run_mfk_example():
         import numpy as np
         import matplotlib.pyplot as plt
-        from smt.applications import MFK
+        from smt.applications.mfk import MFK, NestedLHS
 
-        # Define the
-        def LF_function(x):
+        # low fidelity model
+        def lf_function(x):
             import numpy as np
 
             return (
@@ -137,29 +154,27 @@ class TestMFK(SMTestCase):
                 - 5
             )
 
-        def HF_function(x):
+        # high fidelity model
+        def hf_function(x):
             import numpy as np
 
             return ((x * 6 - 2) ** 2) * np.sin((x * 6 - 2) * 2)
 
         # Problem set up
-        ndim = 1
-        Xt_e = np.linspace(0, 1, 4, endpoint=True).reshape(-1, ndim)
-        Xt_c = np.linspace(0, 1, 11, endpoint=True).reshape(-1, ndim)
-
-        nt_exp = Xt_e.shape[0]
-        nt_cheap = Xt_c.shape[0]
+        xlimits = np.array([[0.0, 1.0]])
+        xdoes = NestedLHS(nlevel=2, xlimits=xlimits)
+        xt_c, xt_e = xdoes(7)
 
         # Evaluate the HF and LF functions
-        yt_e = HF_function(Xt_e)
-        yt_c = LF_function(Xt_c)
+        yt_e = hf_function(xt_e)
+        yt_c = lf_function(xt_c)
 
-        sm = MFK(theta0=np.array(Xt_e.shape[1] * [1.0]))
+        sm = MFK(theta0=xt_e.shape[1] * [1.0])
 
         # low-fidelity dataset names being integers from 0 to level-1
-        sm.set_training_values(Xt_c, yt_c, name=0)
+        sm.set_training_values(xt_c, yt_c, name=0)
         # high-fidelity dataset without name
-        sm.set_training_values(Xt_e, yt_e)
+        sm.set_training_values(xt_e, yt_e)
 
         # train the model
         sm.train()
@@ -168,15 +183,15 @@ class TestMFK(SMTestCase):
 
         # query the outputs
         y = sm.predict_values(x)
-        MSE = sm.predict_variances(x)
-        der = sm.predict_derivatives(x, kx=0)
+        mse = sm.predict_variances(x)
+        derivs = sm.predict_derivatives(x, kx=0)
 
         plt.figure()
 
-        plt.plot(x, HF_function(x), label="reference")
+        plt.plot(x, hf_function(x), label="reference")
         plt.plot(x, y, linestyle="-.", label="mean_gp")
-        plt.scatter(Xt_e, yt_e, marker="o", color="k", label="HF doe")
-        plt.scatter(Xt_c, yt_c, marker="*", color="g", label="LF doe")
+        plt.scatter(xt_e, yt_e, marker="o", color="k", label="HF doe")
+        plt.scatter(xt_c, yt_c, marker="*", color="g", label="LF doe")
 
         plt.legend(loc=0)
         plt.ylim(-10, 17)
